@@ -2,6 +2,10 @@ import numpy as np
 
 
 class Seller():
+    """Seller will produce some amount of supplys per round
+
+    TODO bankruptcy
+    """
     def __init__(self, idx, supply_per_round=10,
                  floor_price=20, asking_price=30):
         self.idx = idx
@@ -25,6 +29,10 @@ class Seller():
 
 
 class Buyer():
+    """Buyerse will demand some amount of goods per round
+
+    TODO changing tastes
+    """
     def __init__(self, idx, demand_per_round=10,
                  ceiling_price=40, asking_price=30):
         self.idx = idx
@@ -47,6 +55,13 @@ class Buyer():
 
 
 class Market():
+    """This market is a 1-1 randonly matching sellers and buyers (if possible).
+
+    Sellers and buyers adjust their asking price according to
+    what happened last round.
+
+    TODO heterogenous agents
+    """
     def __init__(self, n_sellers=10, n_buyers=5, duration=1000, **kwargs):
         self.sellers = [Seller(i) for i in range(n_sellers)]
         self.buyers = [Buyer(i) for i in range(n_buyers)]
