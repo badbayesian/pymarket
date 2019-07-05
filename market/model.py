@@ -1,5 +1,4 @@
 import numpy as np
-import numba
 import matplotlib.pyplot as plt
 
 
@@ -85,7 +84,8 @@ class Market:
         n_buyers: int = 5,
         duration: int = 10,
         rounds: int = 10,
-        market_type: str = "normal",
+        market_type: str = "uniform",
+        **kwargs,
     ):
         """Sets up different types of markets.
 
@@ -93,33 +93,48 @@ class Market:
         uniform -- uniform distribution of buyers and sellers valuation
         normal -- normal distribution of buyers and sellers valuation
         """
+        available_markets = ["constant", "uniform", "normal", "custom"]
+        if market_type not in available_markets:
+            raise NotImplementedError(
+                f"{market_type} market type not available"
+            )
+
         self.market_type = market_type
-        self.market = ""
+        self.__market = ""
         if self.market_type == "constant":
-            self.sellers = [Seller() for _ in range(n_sellers)]
-            self.buyers = [Buyer() for _ in range(n_buyers)]
+            self.sellers = np.array([Seller() for _ in range(n_sellers)])
+            self.buyers = np.array([Buyer() for _ in range(n_buyers)])
         elif self.market_type == "uniform":
             floor_prices = np.random.randint(10, 30, n_sellers)
             ceiling_prices = np.random.randint(20, 40, n_buyers)
-            self.sellers = [
-                Seller(10, floor_prices[i], floor_prices[i] + 10)
-                for i in range(n_sellers)
-            ]
-            self.buyers = [
-                Buyer(10, ceiling_prices[i], ceiling_prices[i] - 10)
-                for i in range(n_buyers)
-            ]
+            self.sellers = np.array(
+                [
+                    Seller(10, floor_prices[i], floor_prices[i] + 10)
+                    for i in range(n_sellers)
+                ]
+            )
+            self.buyers = np.array(
+                [
+                    Buyer(10, ceiling_prices[i], ceiling_prices[i] - 10)
+                    for i in range(n_buyers)
+                ]
+            )
         elif self.market_type == "normal":
+            # TODO
             floor_prices = np.round(np.random.normal(20, 10, n_sellers))
             ceiling_prices = np.round(np.random.normal(40, 10, n_buyers))
-            self.sellers = [
-                Seller(10, floor_prices[i], floor_prices[i] + 10)
-                for i in range(n_sellers)
-            ]
-            self.buyers = [
-                Buyer(10, ceiling_prices[i], ceiling_prices[i] - 10)
-                for i in range(n_buyers)
-            ]
+            self.sellers = np.array(
+                [
+                    Seller(10, floor_prices[i], floor_prices[i] + 10)
+                    for i in range(n_sellers)
+                ]
+            )
+            self.buyers = np.array(
+                [
+                    Buyer(10, ceiling_prices[i], ceiling_prices[i] - 10)
+                    for i in range(n_buyers)
+                ]
+            )
         self.rounds = rounds
         self.duration = duration
 
@@ -159,7 +174,7 @@ class Market:
                     seller.profit += seller.asking_price - seller.floor_price
                     buyer.profit += buyer.ceiling_price - buyer.asking_price
                     seller.to_sell -= 1
-                seller.sold += 1
+                    seller.sold += 1
                     buyer.to_buy -= 1
                     buyer.bought += 1
                 else:
@@ -172,14 +187,18 @@ class Market:
 
     def simulate(self):
         """Simulates market until ending condition."""
-        max_price = max([buyer.asking_price for buyer in self.buyers])
-        min_price = min([seller.asking_price for seller in self.sellers])
+        max_price = np.array(
+            [buyer.asking_price for buyer in self.buyers]
+        ).max()
+        min_price = np.array(
+            [seller.asking_price for seller in self.sellers]
+        ).min()
 
         first = True
         for _ in range(self.rounds):
             [seller.round_reset(first) for seller in self.sellers]
             [buyer.round_reset(first) for buyer in self.buyers]
-            self.market = self.trade()
+            self.__market = self.trade()
             for seller in self.sellers:
                 if seller.to_sell > 0:
                     seller.asking_price = max(
@@ -187,7 +206,7 @@ class Market:
                     )
                 elif max_price == seller.asking_price:
                     pass
-                elif self.market == "sellers":
+                elif self.__market == "sellers":
                     seller.asking_price += 1
             for buyer in self.buyers:
                 if buyer.to_buy > 0:
@@ -196,7 +215,7 @@ class Market:
                     )
                 elif min_price == buyer.asking_price:
                     pass
-                elif self.market == "buyers":
+                elif self.__market == "buyers":
                     buyer.asking_price -= 1
             first = False
 
@@ -218,9 +237,9 @@ class Market:
 def main():
     m = Market(
         n_sellers=10,
-        n_buyers=10,
+        n_buyers=5,
         market_type="uniform",
-        rounds=100,
+        rounds=1,
         duration=1000,
     )
     m.simulate()
