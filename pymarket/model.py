@@ -139,6 +139,8 @@ class Market:
         self.duration = duration
 
     def __repr__(self):
+        # TODO if too many sellers or buyers, condense the information into moments
+        # above 10?
         return (
             "Current Asking Prices:\n"
             + f"Sellers: {[seller.asking_price for seller in self.sellers]}\n"
